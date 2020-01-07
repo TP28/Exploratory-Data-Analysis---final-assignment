@@ -113,15 +113,86 @@ ggplot(data = BaltimoreAgg_3, aes(x = type, y = sumPoll, color = as.factor(year)
         ,legend.text = element_text(size= 15))+
   ggtitle("Baltimore Pollution per year by Type")+ xlab("Year")
 
+# --> Decreaes have been seen in the NON-Road, NON-Point and On-road category. 
+
 # 4.
 # Which have seen increases in emissions from 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
+
+ggplot(data = BaltimoreAgg_3, aes(x = type, y = sumPoll, color = as.factor(year)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+
+# -->Increases have been seen in the PONT-Category.
 
 
 # 5. 
 # Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
 
+
+
+joined_Rawdata<-left_join(x = NEI,y = SCC, by = c("SCC"))
+
+head(joined_Rawdata)
+
+names(joined_Rawdata)
+
+USA_coal<-filter(joined_Rawdata, grepl("coal",SCC.Level.Three))%>%group_by(year,type)%>%summarise(sumPoll = sum(Emissions))
+
+ggplot(data = USA_coal, aes(x = type, y = sumPoll, color = as.character(year)))+
+  geom_bar(stat = "identity", position = "dodge", fill = TRUE)+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("USA Coal Combustion Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+
+
+
 # 6.
 # How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
 #  Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources
 # in Los Angeles County, California (\color{red}{\verb|fips == "06037"|}fips=="06037").
-# Which city has seen greater changes over time in motor vehicle emissions?
+
+Baltimore_motor_vehicle<-joined_Rawdata%>%filter(fips == 24510)%>%filter(grepl("Motor", SCC.Level.Three ))
+
+Baltimore_mv_agg<-Baltimore_motor_vehicle%>%group_by(fips,year,type)%>%summarise(sumPoll = sum(Emissions))
+
+ggplot(data = Baltimore_mv_agg, aes(x = type, y = sumPoll, color = as.character(year)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Motor vehicle  Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+
+# Nonpoint emissions have stayed constant. On-road have decreased at first and than increased in the last time span.
+
+LAC_motor_vehicle<-joined_Rawdata%>%filter(fips == "06037")%>%filter(grepl("Motor", SCC.Level.Three ))
+
+LAC_mv_agg<-LAC_motor_vehicle%>%group_by(fips,year,type)%>%summarise(sumPoll = sum(Emissions))
+
+Compared_emissions<-rbind(Baltimore_mv_agg, LAC_mv_agg)
+
+ggplot(data = Compared_emissions, aes(x = fips, y = sumPoll, color = as.character(year)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Motor vehicle  Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+
+
+
+# 7. Which city has seen greater changes over time in motor vehicle emissions?
+
+# Baltimore has seen greater changes over time in both relative and absolute values but remains at around 
+# 1/3 of the pollution level of Los Angeles
+
+
+
+
+
