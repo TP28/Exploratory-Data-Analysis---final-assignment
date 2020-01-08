@@ -1,0 +1,225 @@
+---
+title: "Exploratory_Final"
+author: "TP28"
+date: "8 1 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, error=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+Exploratory Data Analysis - Final Programming Assignment
+
+
+#Settings
+
+```{r}
+setwd("C:/Users/Tobias/Documents/coursera/Exploratory Data Analysis/Explo_D_a")
+#setwd("O:/R/Coursera/Reproducible Research/Course Project 1")
+
+
+packages<- c("dplyr", "openxlsx", "ggplot2","xlsx", "lubridate","tidyr")
+
+
+lapply(packages, require, character.only = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Initial Load of Data
+
+```{r}
+#download.file(url = "https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip"
+#              ,destfile = "summarySCC_PM25.zip")
+
+unzip(zipfile = "summarySCC_PM25.zip")
+```
+
+
+* fact table
+* file contains data frame with all PM2.5 emissions for 1999,2992,2995 and 2008.
+* number of tons of PM2.5 per year from a source
+
+1. fips: five digit number for the US county
+
+2. SCC: the name of the source - see mapping in SCC dataset
+
+3. Pollutant: the pollutant always is PM2.5
+
+4. type: The type of source
+
+5. year: year of the emission
+
+```{r}
+NEI <- readRDS("summarySCC_PM25.rds")
+```
+
+
+ Source classification code table
+ provides mapping from scc digit strings
+ its up on you to choose the detail level to explore 
+```{r}
+SCC <- readRDS("Source_Classification_Code.rds")
+```
+
+# Question 1 
+Have total emissions from PM2.5 decreased in the United States from 1999 to 2008? Using the base plotting system, make a plot showing the total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008.
+```{r}
+YearAgg<-NEI%>%group_by(year,Pollutant)%>%summarise(sumPoll = sum(Emissions))
+
+png('plot1.png')
+plot(x = YearAgg$year ,y = YearAgg$sumPoll, main = "PM 2.5 Pollution", xlab = "Year", ylab = "Pollution"
+     , col = "darkblue", lwd = 2, pch = 1)
+dev.off()
+
+
+lm(data = YearAgg,formula = sumPoll~year)
+```
+Negative Coefficient for year --> negative trend as shown in base plot
+
+# Question 2
+Have total emissions from PM2.5 decreased in the Baltimore City, Maryland (\color{red}{\verb|fips == "24510"|}fips=="24510") from 1999 to 2008? Use the base plotting system to make a plot answering this question.
+
+```{r}
+BaltimoreAgg<-NEI%>%filter(fips == 24510)%>%group_by(year,Pollutant)%>%summarise(sumPoll = sum(Emissions))
+
+png('plot2.png')
+plot(x = BaltimoreAgg$year ,y = BaltimoreAgg$sumPoll, main = "Baltimore PM 2.5 Pollution", xlab = "Year", ylab = "Pollution"
+     , col = "darkblue", lwd = 2, pch = 1)
+dev.off()
+lm(data = BaltimoreAgg,formula = sumPoll~year)
+```
+negative general trend
+
+
+# Question 3
+Of the four types of sources indicated by the \color{red}{\verb|type|}type (point, nonpoint, onroad, nonroad) variable, which of these four sources have seen decreases in emissions from 1999–2008 for Baltimore City? Which have seen increases in emissions from 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
+
+```{r}
+BaltimoreAgg_2<-NEI%>%filter(fips == 24510)%>%group_by(year,Pollutant,type)%>%summarise(sumPoll = sum(Emissions))
+
+png('plot3.png')
+ggplot(data = BaltimoreAgg_2,aes(x = year, y= sumPoll, color = type))+
+  geom_line()+
+  theme(axis.title.y = element_blank()
+        ,axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Pollution per year by Type")+ xlab("Year")
+dev.off()
+
+
+BaltimoreAgg_3<-BaltimoreAgg_2%>%filter(year %in% c(1999, 2008))
+ggplot(data = BaltimoreAgg_3, aes(x = year, y = sumPoll, color = type))+
+  geom_bar(stat = "identity", position = "dodge")
+
+png('plot3_1.png')
+ggplot(data = BaltimoreAgg_3, aes(x = type, y = sumPoll, color = as.factor(year)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme(axis.title.y = element_blank()
+        ,axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Pollution per year by Type")+ xlab("Year")
+```
+dev.off()
+ --> Decreaes have been seen in the NON-Road, NON-Point and On-road category. 
+
+
+
+# Question 4
+Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
+
+png('plot4.png')
+```{r}
+ggplot(data = BaltimoreAgg_3, aes(x = type, y = sumPoll, color = as.factor(year)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+dev.off()
+```
+
+ -->Increases have been seen in the PONT-Category.
+
+# Question 5
+How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
+
+```{r}
+joined_Rawdata<-left_join(x = NEI,y = SCC, by = c("SCC"))
+
+head(joined_Rawdata)
+
+names(joined_Rawdata)
+
+USA_coal<-filter(joined_Rawdata, grepl("coal",SCC.Level.Three))%>%group_by(year,type)%>%summarise(sumPoll = sum(Emissions))
+
+png('plot5.png')
+ggplot(data = USA_coal, aes(x = type, y = sumPoll, color = as.character(year)))+
+  geom_bar(stat = "identity", position = "dodge", fill = TRUE)+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("USA Coal Combustion Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+dev.off()
+```
+
+
+
+
+
+
+# Question 6
+Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources in Los Angeles County, California (\color{red}{\verb|fips == "06037"|}fips=="06037"). Which city has seen greater changes over time in motor vehicle emissions?
+
+```{r}
+Baltimore_motor_vehicle<-joined_Rawdata%>%filter(fips == 24510)%>%filter(grepl("Motor", SCC.Level.Three ))
+
+Baltimore_mv_agg<-Baltimore_motor_vehicle%>%group_by(fips,year,type)%>%summarise(sumPoll = sum(Emissions))
+
+png('plot6.png')
+ggplot(data = Baltimore_mv_agg, aes(x = type, y = sumPoll, color = as.character(year)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Motor vehicle  Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+dev.off()
+```
+
+ Nonpoint emissions have stayed constant. On-road have decreased at first and than increased in the last time span.
+
+```{r}
+LAC_motor_vehicle<-joined_Rawdata%>%filter(fips == "06037")%>%filter(grepl("Motor", SCC.Level.Three ))
+
+LAC_mv_agg<-LAC_motor_vehicle%>%group_by(fips,year,type)%>%summarise(sumPoll = sum(Emissions))
+
+Compared_emissions<-rbind(Baltimore_mv_agg, LAC_mv_agg)
+
+png('plot6.png')
+ggplot(data = Compared_emissions, aes(x = fips, y = sumPoll, color = as.character(year)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme(axis.text.x = element_text(angle=90, size=10, face="bold")
+        ,axis.text.y = element_text(size= 10, face= "bold")
+        ,title = element_text(size=25)
+        ,legend.text = element_text(size= 15))+
+  ggtitle("Baltimore Motor vehicle  Pollution per year by Type")+ xlab("Year")+ylab("Amount of Pollution")
+dev.off()
+```
+
+ Baltimore has seen greater changes over time in both relative and absolute values but remains at around  1/3 of the pollution level of Los Angeles. 
+
+
+
+
+
+
