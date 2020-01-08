@@ -64,8 +64,10 @@ SCC <- readRDS("Source_Classification_Code.rds")
 
 YearAgg<-NEI%>%group_by(year,Pollutant)%>%summarise(sumPoll = sum(Emissions))
 
+png('plot1.jpg')
 plot(x = YearAgg$year ,y = YearAgg$sumPoll, main = "PM 2.5 Pollution", xlab = "Year", ylab = "Pollution"
      , col = "darkblue", lwd = 2, pch = 1)
+dev.off()
 
 lm(data = YearAgg,formula = sumPoll~year)
 # Negative Coefficient for year --> negative trend as shown in base plot
@@ -79,8 +81,10 @@ lm(data = YearAgg,formula = sumPoll~year)
 
 BaltimoreAgg<-NEI%>%filter(fips == 24510)%>%group_by(year,Pollutant)%>%summarise(sumPoll = sum(Emissions))
 
+png('plot2.png')
 plot(x = BaltimoreAgg$year ,y = BaltimoreAgg$sumPoll, main = "Baltimore PM 2.5 Pollution", xlab = "Year", ylab = "Pollution"
      , col = "darkblue", lwd = 2, pch = 1)
+dev.off()
 
 lm(data = BaltimoreAgg,formula = sumPoll~year)
 # negative general trend
@@ -91,6 +95,8 @@ lm(data = BaltimoreAgg,formula = sumPoll~year)
 
 BaltimoreAgg_2<-NEI%>%filter(fips == 24510)%>%group_by(year,Pollutant,type)%>%summarise(sumPoll = sum(Emissions))
 
+png('plot3.jpg')
+
 ggplot(data = BaltimoreAgg_2,aes(x = year, y= sumPoll, color = type))+
   geom_line()+
   theme(axis.title.y = element_blank()
@@ -99,6 +105,8 @@ ggplot(data = BaltimoreAgg_2,aes(x = year, y= sumPoll, color = type))+
         ,title = element_text(size=25)
         ,legend.text = element_text(size= 15))+
   ggtitle("Baltimore Pollution per year by Type")+ xlab("Year")
+dev.off()
+
 
 BaltimoreAgg_3<-BaltimoreAgg_2%>%filter(year %in% c(1999, 2008))
 ggplot(data = BaltimoreAgg_3, aes(x = year, y = sumPoll, color = type))+
